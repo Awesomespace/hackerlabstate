@@ -25,6 +25,7 @@ class HackerLabState:
 
         pin = Pin(button_pin, Pin.IN, Pin.PULL_UP)
         pin.irq(trigger=Pin.IRQ_RISING | Pin.IRQ_FALLING, handler=self.state_changed)
+        self.state = pin.value()
 
         while True:
             pass
@@ -53,11 +54,8 @@ class HackerLabState:
                 active = 0
             sleep_ms(1)
 
-        print("State ", pin_value)
-        self.mqtt.publish(mqtt_topic, b"1" if pin_value == 1 else b"0")
+        self.state = pin_value
+        print("State ", self.state)
+        self.mqtt.publish(mqtt_topic, b"1" if self.state == 1 else b"0")
 
-        if pin_value == 1:
-            state = "OPEN"
-        else:
-            state = "CLOSED"
-        urequests.get("https://slack.com/api/chat.postMessage?token=%s&channel=hackerlab&text=Hackerlab%%20is%%20%s" % ( credentials.slack_token, state ) )
+        urequests.get("https://slack.com/api/chat.postMessage?token=%s&channel=hackerlab&text=Hackerlab%%20is%%20%s" % ( credentials.slack_token, "OPEN" if self.state == 1 else "CLOSED" ) )
